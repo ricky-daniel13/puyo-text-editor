@@ -17,7 +17,16 @@ namespace PuyoTextEditor
 {
     class Program
     {
-        static async Task<int> Main(string[] args)
+        static void Main(string[] args)
+        {
+            var source = new CnvrsTextFile("G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text");
+            var serializableSource = new CnvrsTextSerializable(source);
+            var serializedSource = Utf8XmlSerializer.Serialize(serializableSource);
+
+            File.WriteAllText("G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text.xml", serializedSource);
+            return;
+        }
+        static async Task<int> NotMain(string[] args)
         {
             var rootCommand = new RootCommand("Modify text in various Puyo Puyo and Hedgehog Engine 2-based games.")
             {

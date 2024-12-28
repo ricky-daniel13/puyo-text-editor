@@ -1,4 +1,5 @@
-﻿using System.Xml.Linq;
+﻿using System.Collections.Generic;
+using System.Xml.Linq;
 
 namespace PuyoTextEditor.Formats
 {
@@ -23,5 +24,17 @@ namespace PuyoTextEditor.Formats
         /// Gets or sets the text content.
         /// </summary>
         public XElement Text { get; set; } = default!;
+
+        public Dictionary<string, CnvrsSpeakerEntry> Speakers { get; set; }
+
+        public CnvrsTextEntry()
+        {
+            Speakers = new Dictionary<string, CnvrsSpeakerEntry>();
+        }
+
+        public CnvrsTextEntry(int entriesCapacity)
+        {
+            Speakers = new Dictionary<string, CnvrsSpeakerEntry>(entriesCapacity);
+        }
     }
 }

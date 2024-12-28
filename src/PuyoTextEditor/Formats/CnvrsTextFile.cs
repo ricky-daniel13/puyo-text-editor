@@ -72,6 +72,7 @@ namespace PuyoTextEditor.Formats
 
                 source.Position = 0x10 + 0x40;
                 var sheetName = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
+                Console.WriteLine(sheetName);
                 var sheet = new CnvrsTextSheetEntry(textStringsCount)
                 {
                     Id = sheetId,
@@ -88,8 +89,11 @@ namespace PuyoTextEditor.Formats
                     var textOffset = reader.ReadInt64() + 64;
                     var textLength = (int)reader.ReadInt64();
 
+                    var speakerOffset = reader.ReadInt64();
+
                     var entryName = reader.At(entryNameOffset, x => x.ReadNullTerminatedString());
                     var entryText = reader.At(textOffset, x => encoding.Read(x, textLength));
+                    Console.WriteLine(entryText);
 
                     source.Position = secondaryEntryOffset;
 
@@ -108,6 +112,29 @@ namespace PuyoTextEditor.Formats
                     if (entryLayoutEntryOffset != 0)
                     {
                         entryLayoutName = ReadLayout(reader, entryLayoutEntryOffset + 64);
+                    }
+
+                    if (speakerOffset != 0)
+                    {
+                        source.Position = speakerOffset + 64;
+                        var charAmount = reader.ReadInt64();
+                        var charPtr = reader.ReadInt64() + 64;
+                        source.Position = charPtr;
+
+                        for (int charIdx = 0; charIdx < charAmount; charIdx++)
+                        {
+                            var currCharPtr = reader.ReadInt64() + 64;
+                            var currentPosition = source.Position;
+                            source.Position = currCharPtr;
+
+                            string type = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
+                            long unknown = reader.ReadInt64();
+                            string name = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
+                            Console.WriteLine($"\t{name}");
+                            Console.WriteLine($"\t{type}");
+
+                            source.Position = currentPosition;
+                        }
                     }
 
                     sheet.Entries.Add(entryName, new CnvrsTextEntry
