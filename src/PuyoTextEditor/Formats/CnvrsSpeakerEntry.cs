@@ -16,7 +16,7 @@ namespace PuyoTextEditor.Formats
         /// <summary>
         /// Gets or sets the name of the font, or null.
         /// </summary>
-        public string? Name { get; set; }
-        public string? Type { get; set; }
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "";
     }
 }

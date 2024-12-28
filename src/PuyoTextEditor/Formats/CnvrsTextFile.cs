@@ -114,6 +114,8 @@ namespace PuyoTextEditor.Formats
                         entryLayoutName = ReadLayout(reader, entryLayoutEntryOffset + 64);
                     }
 
+                    List<CnvrsSpeakerEntry> speakers = new List<CnvrsSpeakerEntry>();
+
                     if (speakerOffset != 0)
                     {
                         source.Position = speakerOffset + 64;
@@ -128,10 +130,15 @@ namespace PuyoTextEditor.Formats
                             source.Position = currCharPtr;
 
                             string type = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
-                            long unknown = reader.ReadInt64();
+                            ulong unknown = reader.ReadUInt64();
                             string name = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
                             Console.WriteLine($"\t{name}");
                             Console.WriteLine($"\t{type}");
+                            CnvrsSpeakerEntry speaker = new();
+                            speaker.Unknown = unknown;
+                            speaker.Name = name;
+                            speaker.Type = type;
+                            speakers.Add(speaker);
 
                             source.Position = currentPosition;
                         }
@@ -143,6 +150,7 @@ namespace PuyoTextEditor.Formats
                         Text = entryText,
                         FontName = entryFontName,
                         LayoutName = entryLayoutName,
+                        Speakers = speakers
                     });
                 }
             }
