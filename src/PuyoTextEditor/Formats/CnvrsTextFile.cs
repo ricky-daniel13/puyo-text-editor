@@ -89,7 +89,7 @@ namespace PuyoTextEditor.Formats
                     var textOffset = reader.ReadInt64() + 64;
                     var textLength = (int)reader.ReadInt64();
 
-                    var speakerOffset = reader.ReadInt64();
+                    var parametersOffset = reader.ReadInt64();
 
                     var entryName = reader.At(entryNameOffset, x => x.ReadNullTerminatedString());
                     var entryText = reader.At(textOffset, x => encoding.Read(x, textLength));
@@ -114,33 +114,35 @@ namespace PuyoTextEditor.Formats
                         entryLayoutName = ReadLayout(reader, entryLayoutEntryOffset + 64);
                     }
 
-                    List<CnvrsParametersEntry> speakers = new List<CnvrsParametersEntry>();
+                    List<CnvrsParameterEntry> parameters = new List<CnvrsParameterEntry>();
 
-                    if (speakerOffset != 0)
+                    if (parametersOffset != 0)
                     {
-                        source.Position = speakerOffset + 64;
-                        var charAmount = reader.ReadInt64();
-                        var charPtr = reader.ReadInt64() + 64;
-                        source.Position = charPtr;
+                        source.Position = parametersOffset + 64;
+                        var paramCount = reader.ReadInt64();
+                        var paramListPtr = reader.ReadInt64() + 64;
+                        source.Position = paramListPtr;
 
-                        for (int charIdx = 0; charIdx < charAmount; charIdx++)
+                        for (int paramIdx = 0; paramIdx < paramCount; paramIdx++)
                         {
-                            var currCharPtr = reader.ReadInt64() + 64;
-                            var currentPosition = source.Position;
-                            source.Position = currCharPtr;
+                            var currParamPtr = reader.ReadInt64() + 64;
+                            var lastPosition = source.Position;
+                            source.Position = currParamPtr;
 
-                            string type = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
-                            ulong unknown = reader.ReadUInt64();
-                            string name = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
-                            Console.WriteLine($"\t{name}");
-                            Console.WriteLine($"\t{type}");
-                            CnvrsParametersEntry speaker = new();
-                            speaker.Unknown = unknown;
-                            speaker.Value = name;
-                            speaker.Key = type;
-                            speakers.Add(speaker);
+                            string paramKey = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
+                            ulong paramUnknown = reader.ReadUInt64();
+                            string paramValue = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
+                            Console.WriteLine($"\t{paramValue}");
+                            Console.WriteLine($"\t{paramKey}");
+                            CnvrsParameterEntry param = new()
+                            {
+                                Unknown = paramUnknown,
+                                Value = paramValue,
+                                Key = paramKey
+                            };
+                            parameters.Add(param);
 
-                            source.Position = currentPosition;
+                            source.Position = lastPosition;
                         }
                     }
 
@@ -150,7 +152,7 @@ namespace PuyoTextEditor.Formats
                         Text = entryText,
                         FontName = entryFontName,
                         LayoutName = entryLayoutName,
-                        Speakers = speakers
+                        Parameters = parameters
                     });
                 }
             }
@@ -174,8 +176,16 @@ namespace PuyoTextEditor.Formats
                             Id = ulong.Parse(v2.AttributeOrThrow("id").Value),
                             FontName = v2.Attribute("font")?.Value,
                             LayoutName = v2.Attribute("layout")?.Value,
-                            Text = new XElement("text", v2.Nodes()),
-                        })
+                            Text = new XElement("text", v2.Element("text")?.Nodes()),
+                            Parameters = v2.Element("parameters")?.Elements("parameter")
+                                .Select(paramElement => new CnvrsParameterEntry
+                                {
+                                    Unknown = ulong.Parse(paramElement.AttributeOrThrow("unknown").Value),
+                                    Key = paramElement.AttributeOrThrow("key").Value,
+                                    Value = paramElement.AttributeOrThrow("value").Value,
+                                })
+                                .ToList() ?? new List<CnvrsParameterEntry>()
+                                })
                 });
 
             Fonts = cnvrsTextSerializable.Fonts.ToDictionary(
@@ -288,7 +298,7 @@ namespace PuyoTextEditor.Formats
                         writeOffset(0); // Secondary entry offset (filled in later)
                         writeOffset(0); // Text string offset (filled in later)
                         writer.WriteInt64(encoding.GetByteCount(text.Text) / 2); // Length of text string in characters
-                        writer.WriteInt64(0); // 8 null bytes
+                        writeOffset(0); // Parameter list offset (filled in later)
                     }
                 }
 
@@ -456,6 +466,69 @@ namespace PuyoTextEditor.Formats
                     writer.WriteInt32((int)layout.Fit);
                     writer.WriteInt32(0); // May not be needed
                 }
+
+                //Parameter list entries
+                foreach (var (sheetName, sheet) in Sheets)
+                {
+                    var sheetNode = sheetNodes[sheetName];
+                    foreach (var (textName, text) in sheet.Entries)
+                    {
+                        if (text.Parameters?.Count > 0)
+                        {
+                            var textNode = sheetNode.TextNodes[textName];
+                            textNode.ParameterNodeStartPosition = destination.Position;
+                            writer.WriteInt64(text.Parameters.Count);
+                            var parameterListStart = destination.Position;
+                            writeOffset(0); // Parameter list offset (filled in later)
+                        }
+                    }
+                }
+
+                // Parameter data entries
+                foreach (var (sheetName, sheet) in Sheets)
+                {
+                    var sheetNode = sheetNodes[sheetName];
+                    foreach (var (textName, text) in sheet.Entries)
+                    {
+                        if (text.Parameters?.Count > 0)
+                        {
+                            var textNode = sheetNode.TextNodes[textName];
+
+                            foreach (var parameter in text.Parameters)
+                            {
+                                var parameterNode = new ParameterNode
+                                {
+                                    EntryPosition = destination.Position,
+                                };
+                                textNode.ParameterNodes.Add(parameter.Key, parameterNode);
+
+                                writeOffset(0); // Key string offset (filled in later)
+                                writer.WriteUInt64(parameter.Unknown);
+                                writeOffset(0); // Value string offset (filled in later)
+                            }
+                        }
+                    }
+                }
+
+                // Parameter pointer list entries
+                foreach (var (sheetName, sheet) in Sheets)
+                {
+                    var sheetNode = sheetNodes[sheetName];
+                    foreach (var (textName, text) in sheet.Entries)
+                    {
+                        if (text.Parameters?.Count > 0)
+                        {
+                            var textNode = sheetNode.TextNodes[textName];
+                            textNode.ParameterListStartPosition = destination.Position;
+
+                            foreach (var parameter in text.Parameters)
+                            {
+                                writeOffset(0); // Parameter data pointer
+                            }
+                        }
+                    }
+                }
+
 
                 // Value entries
                 var nameEntryPosition = destination.Position;
@@ -713,7 +786,16 @@ namespace PuyoTextEditor.Formats
             public long EntryPosition;
             public long SecondaryEntryPosition;
             public long TextPosition;
+            public long ParameterNodeStartPosition;
+            public long ParameterListStartPosition;
+            public Dictionary<string, ParameterNode> ParameterNodes { get; } = new Dictionary<string, ParameterNode>();
         }
+
+        private class ParameterNode
+        {
+            public long EntryPosition;
+        }
+
 
         private class FontNode
         {

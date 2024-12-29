@@ -72,12 +72,12 @@ namespace PuyoTextEditor.Serialization
             
 
             // Create the <speakers> child element
-            if (entry.Speakers != null && entry.Speakers.Any())
+            if (entry.Parameters != null && entry.Parameters.Any())
             {
                 var speakersElement = new XElement("parameters");
 
                 // Add each speaker as a <speaker> element with the name attribute
-                foreach (var speaker in entry.Speakers)
+                foreach (var speaker in entry.Parameters)
                 {
                     speakersElement.Add(new XElement("parameter", new XAttribute("key", speaker.Key), new XAttribute("value", speaker.Value), new XAttribute("unknown", speaker.Unknown)));
                 }

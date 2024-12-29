@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PuyoTextEditor.Formats
 {
-    public class CnvrsParametersEntry
+    public class CnvrsParameterEntry
     {
         /// <summary>
         /// Gets or sets the unknown 64 bit value.

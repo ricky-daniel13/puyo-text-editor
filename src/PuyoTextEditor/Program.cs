@@ -19,8 +19,9 @@ namespace PuyoTextEditor
     {
         static void Main(string[] args)
         {
-            var sourcePath = "G:\\PROYECTOSDisco2\\SF-Fandub\\OGFiles\\text\\text_caption_en\\sb1050.cnvrs-text";
-            var exportPath = "G:\\PROYECTOSDisco2\\SF-Fandub\\OGFiles\\text\\text_caption_en\\sb1050.cnvrs-text.xml";
+            var sourcePath = "G:\\SteamLibrary\\steamapps\\common\\SonicFrontiers\\Mods\\CaptionTesting_variant2\\raw\\text\\og_text_caption_en\\sb1050.cnvrs-text";
+            var exportPath = "G:\\SteamLibrary\\steamapps\\common\\SonicFrontiers\\Mods\\CaptionTesting_variant2\\raw\\text\\sb1050.cnvrs-text.xml";
+            var exportBackPath = "G:\\SteamLibrary\\steamapps\\common\\SonicFrontiers\\Mods\\CaptionTesting_variant2\\raw\\text\\text_caption_en\\sb1050.cnvrs-text";
 
             /*var sourcePath = "G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text";
             var exportPath = "G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text.xml";*/
@@ -30,6 +31,13 @@ namespace PuyoTextEditor
             var serializedSource = Utf8XmlSerializer.Serialize(serializableSource);
 
             File.WriteAllText(exportPath, serializedSource);
+
+            var reserializedSource = File.ReadAllText(exportPath);
+            var deserializedSource = Utf8XmlSerializer.Deserialize<CnvrsTextSerializable>(reserializedSource)
+                ?? throw new NullValueException();
+            var destination = new CnvrsTextFile(deserializedSource);
+
+            destination.Save(exportBackPath);
             return;
         }
         static async Task<int> NotMain(string[] args)
