@@ -19,11 +19,17 @@ namespace PuyoTextEditor
     {
         static void Main(string[] args)
         {
-            var source = new CnvrsTextFile("G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text");
+            var sourcePath = "G:\\PROYECTOSDisco2\\SF-Fandub\\OGFiles\\text\\text_caption_en\\qu15.cnvrs-text";
+            var exportPath = "G:\\PROYECTOSDisco2\\SF-Fandub\\OGFiles\\text\\text_caption_en\\qu15.cnvrs-text.xml";
+
+            /*var sourcePath = "G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text";
+            var exportPath = "G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text.xml";*/
+
+            var source = new CnvrsTextFile(sourcePath);
             var serializableSource = new CnvrsTextSerializable(source);
             var serializedSource = Utf8XmlSerializer.Serialize(serializableSource);
 
-            File.WriteAllText("G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text.xml", serializedSource);
+            File.WriteAllText(exportPath, serializedSource);
             return;
         }
         static async Task<int> NotMain(string[] args)

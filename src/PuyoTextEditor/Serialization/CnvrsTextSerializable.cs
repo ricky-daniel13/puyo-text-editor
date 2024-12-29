@@ -69,6 +69,7 @@ namespace PuyoTextEditor.Serialization
             // Create the <text> child element and add the content
             var textElement = new XElement("text", entry.Text.Nodes());
             root.Add(textElement);
+            
 
             // Create the <speakers> child element
             if (entry.Speakers != null && entry.Speakers.Any())
@@ -83,6 +84,7 @@ namespace PuyoTextEditor.Serialization
 
                 root.Add(speakersElement);
             }
+
 
             return root;
         }
