@@ -19,8 +19,8 @@ namespace PuyoTextEditor
     {
         static void Main(string[] args)
         {
-            var sourcePath = "G:\\PROYECTOSDisco2\\SF-Fandub\\OGFiles\\text\\text_caption_en\\qu15.cnvrs-text";
-            var exportPath = "G:\\PROYECTOSDisco2\\SF-Fandub\\OGFiles\\text\\text_caption_en\\qu15.cnvrs-text.xml";
+            var sourcePath = "G:\\PROYECTOSDisco2\\SF-Fandub\\OGFiles\\text\\text_caption_en\\sb1050.cnvrs-text";
+            var exportPath = "G:\\PROYECTOSDisco2\\SF-Fandub\\OGFiles\\text\\text_caption_en\\sb1050.cnvrs-text.xml";
 
             /*var sourcePath = "G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text";
             var exportPath = "G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text.xml";*/

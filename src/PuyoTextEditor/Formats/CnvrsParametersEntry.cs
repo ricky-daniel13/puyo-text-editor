@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PuyoTextEditor.Formats
 {
-    public class CnvrsSpeakerEntry
+    public class CnvrsParametersEntry
     {
         /// <summary>
         /// Gets or sets the unknown 64 bit value.
@@ -16,7 +16,7 @@ namespace PuyoTextEditor.Formats
         /// <summary>
         /// Gets or sets the name of the font, or null.
         /// </summary>
-        public string Name { get; set; } = "";
-        public string Type { get; set; } = "";
+        public string Value { get; set; } = "";
+        public string Key { get; set; } = "";
     }
 }

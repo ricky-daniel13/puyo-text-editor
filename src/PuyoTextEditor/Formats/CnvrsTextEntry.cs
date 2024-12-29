@@ -25,16 +25,16 @@ namespace PuyoTextEditor.Formats
         /// </summary>
         public XElement Text { get; set; } = default!;
 
-        public List<CnvrsSpeakerEntry> Speakers { get; set; }
+        public List<CnvrsParametersEntry> Speakers { get; set; }
 
         public CnvrsTextEntry()
         {
-            Speakers = new List<CnvrsSpeakerEntry>();
+            Speakers = new List<CnvrsParametersEntry>();
         }
 
         public CnvrsTextEntry(int entriesCapacity)
         {
-            Speakers = new List<CnvrsSpeakerEntry>(entriesCapacity);
+            Speakers = new List<CnvrsParametersEntry>(entriesCapacity);
         }
     }
 }

@@ -114,7 +114,7 @@ namespace PuyoTextEditor.Formats
                         entryLayoutName = ReadLayout(reader, entryLayoutEntryOffset + 64);
                     }
 
-                    List<CnvrsSpeakerEntry> speakers = new List<CnvrsSpeakerEntry>();
+                    List<CnvrsParametersEntry> speakers = new List<CnvrsParametersEntry>();
 
                     if (speakerOffset != 0)
                     {
@@ -134,10 +134,10 @@ namespace PuyoTextEditor.Formats
                             string name = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
                             Console.WriteLine($"\t{name}");
                             Console.WriteLine($"\t{type}");
-                            CnvrsSpeakerEntry speaker = new();
+                            CnvrsParametersEntry speaker = new();
                             speaker.Unknown = unknown;
-                            speaker.Name = name;
-                            speaker.Type = type;
+                            speaker.Value = name;
+                            speaker.Key = type;
                             speakers.Add(speaker);
 
                             source.Position = currentPosition;
@@ -457,7 +457,7 @@ namespace PuyoTextEditor.Formats
                     writer.WriteInt32(0); // May not be needed
                 }
 
-                // Name entries
+                // Value entries
                 var nameEntryPosition = destination.Position;
                 foreach (var (sheetName, sheet) in Sheets)
                 {
