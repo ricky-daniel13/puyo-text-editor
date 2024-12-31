@@ -298,7 +298,10 @@ namespace PuyoTextEditor.Formats
                         writeOffset(0); // Secondary entry offset (filled in later)
                         writeOffset(0); // Text string offset (filled in later)
                         writer.WriteInt64(encoding.GetByteCount(text.Text) / 2); // Length of text string in characters
-                        writeOffset(0); // Parameter list offset (filled in later)
+                        if(text.Parameters != null && text.Parameters.Any())
+                            writeOffset(0); // Parameter list offset (filled in later)
+                        else
+                            writer.WriteUInt64(0);
                     }
                 }
 
@@ -467,45 +470,19 @@ namespace PuyoTextEditor.Formats
                     writer.WriteInt32(0); // May not be needed
                 }
 
-                //Parameter list entries
+                //Parameter pointer list headers
                 foreach (var (sheetName, sheet) in Sheets)
                 {
                     var sheetNode = sheetNodes[sheetName];
                     foreach (var (textName, text) in sheet.Entries)
                     {
-                        if (text.Parameters?.Count > 0)
+                        if (text.Parameters.Count > 0)
                         {
                             var textNode = sheetNode.TextNodes[textName];
                             textNode.ParameterNodeStartPosition = destination.Position;
                             writer.WriteInt64(text.Parameters.Count);
-                            var parameterListStart = destination.Position;
                             writeOffset(0); // Parameter list offset (filled in later)
-                        }
-                    }
-                }
 
-                // Parameter data entries
-                foreach (var (sheetName, sheet) in Sheets)
-                {
-                    var sheetNode = sheetNodes[sheetName];
-                    foreach (var (textName, text) in sheet.Entries)
-                    {
-                        if (text.Parameters?.Count > 0)
-                        {
-                            var textNode = sheetNode.TextNodes[textName];
-
-                            foreach (var parameter in text.Parameters)
-                            {
-                                var parameterNode = new ParameterNode
-                                {
-                                    EntryPosition = destination.Position,
-                                };
-                                textNode.ParameterNodes.Add(parameter.Key, parameterNode);
-
-                                writeOffset(0); // Key string offset (filled in later)
-                                writer.WriteUInt64(parameter.Unknown);
-                                writeOffset(0); // Value string offset (filled in later)
-                            }
                         }
                     }
                 }
@@ -516,7 +493,7 @@ namespace PuyoTextEditor.Formats
                     var sheetNode = sheetNodes[sheetName];
                     foreach (var (textName, text) in sheet.Entries)
                     {
-                        if (text.Parameters?.Count > 0)
+                        if (text.Parameters.Count > 0)
                         {
                             var textNode = sheetNode.TextNodes[textName];
                             textNode.ParameterListStartPosition = destination.Position;
@@ -529,8 +506,36 @@ namespace PuyoTextEditor.Formats
                     }
                 }
 
+                // Parameter data entries
+                foreach (var (sheetName, sheet) in Sheets)
+                {
+                    var sheetNode = sheetNodes[sheetName];
+                    foreach (var (textName, text) in sheet.Entries)
+                    {
+                        if (text.Parameters.Count > 0)
+                        {
+                            var textNode = sheetNode.TextNodes[textName];
 
-                // Value entries
+                            for (int i = 0; i < text.Parameters.Count; i++)
+                            {
+                                var parameter = text.Parameters[i];
+                                var parameterNode = new ParameterNode
+                                {
+                                    EntryPosition = destination.Position,
+                                };
+                                textNode.ParameterNodes.Add(i, parameterNode);
+
+                                writeOffset(0); // Key string offset (filled in later)
+                                writer.WriteUInt64(parameter.Unknown);
+                                writeOffset(0); // Value string offset (filled in later)
+                            }
+                        }
+                    }
+                }
+
+
+
+                // Name entries
                 var nameEntryPosition = destination.Position;
                 foreach (var (sheetName, sheet) in Sheets)
                 {
@@ -547,6 +552,25 @@ namespace PuyoTextEditor.Formats
                             nameOffsets.Add(textName, destination.Position);
                             writer.WriteNullTerminatedString(textName);
                         }
+                    }
+
+                    foreach (var textName in sheet.Entries.Keys)
+                    {
+                        var entry = sheet.Entries[textName];
+                        foreach(var parameter in entry.Parameters)
+                        {
+                            if (!nameOffsets.ContainsKey(parameter.Key))
+                            {
+                                nameOffsets.Add(parameter.Key, destination.Position);
+                                writer.WriteNullTerminatedString(parameter.Key);
+                            }
+                            if (!nameOffsets.ContainsKey(parameter.Value))
+                            {
+                                nameOffsets.Add(parameter.Value, destination.Position);
+                                writer.WriteNullTerminatedString(parameter.Value);
+                            }
+                        }
+
                     }
                 }
                 foreach (var (name, font) in Fonts)
@@ -627,6 +651,11 @@ namespace PuyoTextEditor.Formats
                         writer.WriteInt64(textNode.SecondaryEntryPosition - 64);
                         writer.WriteInt64(textNode.TextPosition - 64);
 
+                        destination.Position = textNode.EntryPosition + 0x28;
+                        //Console.WriteLine($"Line count? : {textNode.ParameterNodes.Count}, Node start position? {textNode.ParameterNodeStartPosition - 64}");
+                        if (textNode.ParameterNodes.Count > 0)
+                            writer.WriteInt64(textNode.ParameterNodeStartPosition - 64);
+
                         destination.Position = textNode.SecondaryEntryPosition;
                         writer.WriteInt64(nameOffsets[textName] - 64);
                         writer.WriteInt64(fontName is not null
@@ -651,6 +680,34 @@ namespace PuyoTextEditor.Formats
                 {
                     destination.Position = node.EntryPosition;
                     writer.WriteInt64(nameOffsets[name] - 64);
+                }
+
+                foreach (var (sheetName, sheetNode) in sheetNodes)
+                {
+                    foreach (var (textName, textNode) in sheetNode.TextNodes)
+                    {
+                        if (textNode.ParameterNodes.Count > 0)
+                        {
+                            var textEntry = Sheets[sheetName].Entries[textName];
+                            destination.Position = textNode.ParameterNodeStartPosition + 0x8;
+                            writer.WriteInt64(textNode.ParameterListStartPosition - 64);
+                            Console.WriteLine($"Param start node: {textNode.ParameterListStartPosition}");
+
+                            destination.Position = textNode.ParameterListStartPosition;
+                            foreach(var (paramIndex, paramNode) in textNode.ParameterNodes)
+                            {
+                                Console.WriteLine($"Param node: {paramNode.EntryPosition - 64}");
+                                writer.WriteInt64(paramNode.EntryPosition - 64);
+                            }
+                            foreach (var (paramIndex, paramNode) in textNode.ParameterNodes)
+                            {
+                                destination.Position = paramNode.EntryPosition;
+                                writer.WriteInt64(nameOffsets[textEntry.Parameters[paramIndex].Key] - 64);
+                                destination.Position = paramNode.EntryPosition + 0x10;
+                                writer.WriteInt64(nameOffsets[textEntry.Parameters[paramIndex].Value] - 64);
+                            }
+                        }
+                    }
                 }
 
                 destination.Seek(0, SeekOrigin.End);
@@ -788,7 +845,7 @@ namespace PuyoTextEditor.Formats
             public long TextPosition;
             public long ParameterNodeStartPosition;
             public long ParameterListStartPosition;
-            public Dictionary<string, ParameterNode> ParameterNodes { get; } = new Dictionary<string, ParameterNode>();
+            public Dictionary<int, ParameterNode> ParameterNodes { get; } = new Dictionary<int, ParameterNode>();
         }
 
         private class ParameterNode

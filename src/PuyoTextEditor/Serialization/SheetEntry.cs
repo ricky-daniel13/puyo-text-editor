@@ -16,7 +16,7 @@ namespace PuyoTextEditor.Serialization
             set => TextsSerialized = value.Select(x => FormatText(x)).ToList();
         }
 
-        [XmlAnyElement("text")]
+        [XmlAnyElement("textEntry")]
         public List<XElement> TextsSerialized { get; set; } = new List<XElement>();
 
         public static XElement TrimText(XElement textEntryElement)

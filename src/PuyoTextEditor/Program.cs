@@ -33,9 +33,25 @@ namespace PuyoTextEditor
             File.WriteAllText(exportPath, serializedSource);
 
             var reserializedSource = File.ReadAllText(exportPath);
+            Console.WriteLine(reserializedSource);
             var deserializedSource = Utf8XmlSerializer.Deserialize<CnvrsTextSerializable>(reserializedSource)
                 ?? throw new NullValueException();
             var destination = new CnvrsTextFile(deserializedSource);
+
+            Console.WriteLine("Loaded destination");
+
+            foreach ((var sheetName, var sheet) in destination.Sheets)
+            {
+                Console.WriteLine(sheetName);
+                foreach ((var entryName, var entry) in sheet.Entries)
+                {
+                    Console.WriteLine($"{entryName}: {entry.Text}");
+                    foreach(var parameter in entry.Parameters)
+                    {
+                        Console.WriteLine($"\t{parameter.Key}: {parameter.Value}");
+                    }
+                }
+            }
 
             destination.Save(exportBackPath);
             return;
