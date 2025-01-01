@@ -17,46 +17,7 @@ namespace PuyoTextEditor
 {
     class Program
     {
-        static void Main(string[] args)
-        {
-            var sourcePath = "G:\\SteamLibrary\\steamapps\\common\\SonicFrontiers\\Mods\\CaptionTesting_variant2\\raw\\text\\og_text_caption_en\\sb1050.cnvrs-text";
-            var exportPath = "G:\\SteamLibrary\\steamapps\\common\\SonicFrontiers\\Mods\\CaptionTesting_variant2\\raw\\text\\sb1050.cnvrs-text.xml";
-            var exportBackPath = "G:\\SteamLibrary\\steamapps\\common\\SonicFrontiers\\Mods\\CaptionTesting_variant2\\raw\\text\\text_caption_en\\sb1050.cnvrs-text";
-
-            /*var sourcePath = "G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text";
-            var exportPath = "G:\\PROYECTOSDisco2\\SonicXShadow Latino\\files\\text\\og\\text_common_en\\Caption.cnvrs-text.xml";*/
-
-            var source = new CnvrsTextFile(sourcePath);
-            var serializableSource = new CnvrsTextSerializable(source);
-            var serializedSource = Utf8XmlSerializer.Serialize(serializableSource);
-
-            File.WriteAllText(exportPath, serializedSource);
-
-            var reserializedSource = File.ReadAllText(exportPath);
-            Console.WriteLine(reserializedSource);
-            var deserializedSource = Utf8XmlSerializer.Deserialize<CnvrsTextSerializable>(reserializedSource)
-                ?? throw new NullValueException();
-            var destination = new CnvrsTextFile(deserializedSource);
-
-            Console.WriteLine("Loaded destination");
-
-            foreach ((var sheetName, var sheet) in destination.Sheets)
-            {
-                Console.WriteLine(sheetName);
-                foreach ((var entryName, var entry) in sheet.Entries)
-                {
-                    Console.WriteLine($"{entryName}: {entry.Text}");
-                    foreach(var parameter in entry.Parameters)
-                    {
-                        Console.WriteLine($"\t{parameter.Key}: {parameter.Value}");
-                    }
-                }
-            }
-
-            destination.Save(exportBackPath);
-            return;
-        }
-        static async Task<int> NotMain(string[] args)
+        static async Task<int> Main(string[] args)
         {
             var rootCommand = new RootCommand("Modify text in various Puyo Puyo and Hedgehog Engine 2-based games.")
             {

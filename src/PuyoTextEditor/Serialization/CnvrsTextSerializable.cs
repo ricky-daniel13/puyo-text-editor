@@ -54,8 +54,7 @@ namespace PuyoTextEditor.Serialization
         {
             // Create the root element <textEntry> with attributes
             var root = new XElement("textEntry",
-                new XAttribute("name", name),
-                new XAttribute("id", entry.Id));
+                new XAttribute("name", name));
 
             if (entry.FontName is not null)
             {
